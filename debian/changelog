@@ -1,0 +1,8 @@
+ros-eloquent-rmf-schedule-visualizer-msgs (1.0.0-1bionic) bionic; urgency=high
+
+  * Message definition with parameters to query the rmf traffic schedule
+  * Contributors: Grey, Yadu
+
+ -- yadu <yadunund@openrobotics.org>  Mon, 22 Jun 2020 00:00:00 -0000
+
+
