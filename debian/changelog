@@ -1,0 +1,8 @@
+ros-eloquent-building-systems-visualizer (1.0.0-2bionic) bionic; urgency=high
+
+  * A ROS 2 node that publishers RViz markers to visualize the states of doors and elevators as defined in the building_map::msgs::BuildingMap message.
+  * Contributors: Chen Bainian, Yadu
+
+ -- yadu <yadunund@openrobotics.org>  Sun, 21 Jun 2020 16:00:00 -0000
+
+
