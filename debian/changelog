@@ -1,0 +1,10 @@
+ros-eloquent-rviz2-plugin (1.0.0-3bionic) bionic; urgency=high
+
+  * Provides the interactive Schedule Panel to update the active view of the visualizer with the map and time ranges of interest.
+  * Provides the interactive Door Panel to manually request the opening and closing of doors in a building
+  * Provides the interactive Lift Panel to manually request an elevator to a desired level in the building
+  * Contributors: Aaron, Aaron Chong, Grey, Yadu
+
+ -- yadu <yadunund@openrobotics.org>  Sun, 21 Jun 2020 16:00:00 -0000
+
+
