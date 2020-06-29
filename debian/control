@@ -1,0 +1,12 @@
+Source: ros-eloquent-building-systems-visualizer
+Section: misc
+Priority: optional
+Maintainer: yadu <yadunund@openrobotics.org>
+Build-Depends: debhelper (>= 9.0.0), python3-pytest, ros-eloquent-ament-copyright, ros-eloquent-ament-flake8, ros-eloquent-ament-pep257, ros-eloquent-building-map-msgs, ros-eloquent-geometry-msgs, ros-eloquent-rmf-door-msgs, ros-eloquent-rmf-lift-msgs, ros-eloquent-ros-workspace, python3-all, python3-setuptools
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-eloquent-building-systems-visualizer
+Architecture: any
+Depends: ${python3:Depends}, ${misc:Depends}, ros-eloquent-building-map-msgs, ros-eloquent-geometry-msgs, ros-eloquent-rmf-door-msgs, ros-eloquent-rmf-lift-msgs, ros-eloquent-ros-workspace
+Description: A visualizer for doors and lifts
