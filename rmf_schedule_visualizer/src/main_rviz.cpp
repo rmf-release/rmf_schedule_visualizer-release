@@ -36,9 +36,14 @@
 #include <geometry_msgs/msg/point.hpp>
 #include <std_msgs/msg/color_rgba.hpp>
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+
 #include <mutex>
 #include <unordered_map>
 #include <unordered_set>
+
+#include "nav_msgs/msg/occupancy_grid.hpp"
 
 using namespace std::chrono_literals;
 
@@ -47,6 +52,7 @@ class RvizNode : public rclcpp::Node
 public:
   using Marker = visualization_msgs::msg::Marker;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
+  using OccupancyGrid = nav_msgs::msg::OccupancyGrid;
   using Point = geometry_msgs::msg::Point;
   using RequestParam = rmf_schedule_visualizer::RequestParam;
   using Element = rmf_traffic::schedule::Viewer::View::Element;
@@ -55,17 +61,18 @@ public:
   using Level = building_map_msgs::msg::Level;
   using GraphNode = building_map_msgs::msg::GraphNode;
   using Color = std_msgs::msg::ColorRGBA;
+  using VisualizerDataNode = rmf_schedule_visualizer::VisualizerDataNode;
 
   RvizNode(
     std::string node_name,
-    rmf_schedule_visualizer::VisualizerDataNode& visualizer_data_node,
+    std::shared_ptr<VisualizerDataNode> visualizer_data_node,
     std::string map_name,
     double rate = 1.0,
     std::string frame_id = "/map")
   : Node(node_name),
     _rate(rate),
     _frame_id(frame_id),
-    _visualizer_data_node(visualizer_data_node)
+    _visualizer_data_node(std::move(visualizer_data_node))
   {
     // TODO add a constructor for RvizParam
     _rviz_param.map_name = map_name;
@@ -94,6 +101,11 @@ public:
       "map_markers",
       transient_qos_profile);
 
+    transient_qos_profile.transient_local();
+    _floorplan_pub = this->create_publisher<OccupancyGrid>(
+      "floorplan",
+      transient_qos_profile);
+
     // Create subscriber for rviz_param in separate thread
     _cb_group_param_sub = this->create_callback_group(
       rclcpp::callback_group::CallbackGroupType::MutuallyExclusive);
@@ -104,7 +116,7 @@ public:
       rclcpp::QoS(10),
       [&](RvizParamMsg::SharedPtr msg)
       {
-        std::lock_guard<std::mutex> guard(_visualizer_data_node.get_mutex());
+        std::lock_guard<std::mutex> guard(_visualizer_data_node->get_mutex());
 
         if (!msg->map_name.empty() && _rviz_param.map_name != msg->map_name)
         {
@@ -140,7 +152,7 @@ public:
       transient_qos_profile,
       [&](BuildingMap::SharedPtr msg)
       {
-        std::lock_guard<std::mutex> guard(_visualizer_data_node.get_mutex());
+        std::lock_guard<std::mutex> guard(_visualizer_data_node->get_mutex());
         RCLCPP_INFO(this->get_logger(), "Received map \""
         + msg->name + "\" containing "
         + std::to_string(msg->levels.size()) + " level(s)");
@@ -165,15 +177,15 @@ private:
 
     // TODO store a cache of trajectories to prevent frequent access.
     // Update cache whenever mirror manager updates
-    std::lock_guard<std::mutex> guard(_visualizer_data_node.get_mutex());
+    std::lock_guard<std::mutex> guard(_visualizer_data_node->get_mutex());
 
     RequestParam query_param;
     query_param.map_name = _rviz_param.map_name;
-    query_param.start_time = _visualizer_data_node.now();
+    query_param.start_time = _visualizer_data_node->now();
     query_param.finish_time = query_param.start_time +
       _rviz_param.query_duration;
 
-    _elements = _visualizer_data_node.get_elements(query_param);
+    _elements = _visualizer_data_node->get_elements(query_param);
 
     RequestParam traj_param;
     traj_param.map_name = query_param.map_name;
@@ -239,7 +251,7 @@ private:
         for (auto& marker : array.markers)
         {
           marker.header.stamp = rmf_traffic_ros2::convert(
-            _visualizer_data_node.now());
+            _visualizer_data_node->now());
           marker.action = marker.DELETE;
         }
         return array;
@@ -251,7 +263,7 @@ private:
         Marker label_marker;
         label_marker.header.frame_id = _frame_id; // map
         label_marker.header.stamp = rmf_traffic_ros2::convert(
-          _visualizer_data_node.now());
+          _visualizer_data_node->now());
         label_marker.ns = "labels";
         label_marker.id = count;
         label_marker.type = label_marker.TEXT_VIEW_FACING;
@@ -321,7 +333,7 @@ private:
       Marker node_marker;
       node_marker.header.frame_id = _frame_id; // map
       node_marker.header.stamp = rmf_traffic_ros2::convert(
-        _visualizer_data_node.now());
+        _visualizer_data_node->now());
       node_marker.ns = "map";
       node_marker.id = 0;
       node_marker.type = node_marker.POINTS;
@@ -384,7 +396,7 @@ private:
     Marker marker_msg;
     marker_msg.header.frame_id = _frame_id; // map
     marker_msg.header.stamp = rmf_traffic_ros2::convert(
-      _visualizer_data_node.now());
+      _visualizer_data_node->now());
     marker_msg.ns = "trajectory";
     marker_msg.id = id;
     marker_msg.type = marker_msg.CYLINDER;
@@ -427,8 +439,8 @@ private:
     marker_msg.pose.orientation.w = quat.w;
 
     // Set the scale of the marker
-    marker_msg.scale.x = radius / 1.0;
-    marker_msg.scale.y = radius / 1.0;
+    marker_msg.scale.x = 2.0 * radius;
+    marker_msg.scale.y = 2.0 * radius;
     marker_msg.scale.z = height;
 
     // Set the color of the marker
@@ -625,7 +637,7 @@ private:
 
   bool is_conflict(int64_t id)
   {
-    const auto& conflicts = _visualizer_data_node.get_conflicts();
+    const auto& conflicts = _visualizer_data_node->get_conflicts();
     if (conflicts.find(id) != conflicts.end())
       return true;
     return false;
@@ -699,6 +711,8 @@ private:
           _has_level = true;
           _level = level;
           RCLCPP_INFO(this->get_logger(), "Level cache updated");
+          publish_map_markers();
+          publish_floorplan();
           break;
         }
       }
@@ -707,10 +721,47 @@ private:
       {
         RCLCPP_INFO(this->get_logger(), "Level cache not updated");
       }
-
-      publish_map_markers();
-
     }
+  }
+
+  void publish_floorplan()
+  {
+    if (_level.images.size() == 0)
+      return;
+
+    auto floorplan_img = _level.images[0]; // only use the first img
+    RCLCPP_INFO(this->get_logger(),
+      "Loading floorplan Image: " + floorplan_img.name +
+      floorplan_img.encoding);
+    cv::Mat img =
+      cv::imdecode(cv::Mat(floorplan_img.data), cv::IMREAD_GRAYSCALE);
+
+    OccupancyGrid floorplan_msg;
+    floorplan_msg.info.resolution = floorplan_img.scale;
+    floorplan_msg.header.frame_id = "map";
+    floorplan_msg.info.width = img.cols;
+    floorplan_msg.info.height = img.rows;
+    floorplan_msg.info.origin.position.x = floorplan_img.x_offset;
+    floorplan_msg.info.origin.position.y = floorplan_img.y_offset;
+    floorplan_msg.info.origin.position.z = -0.01;
+
+    Eigen::Quaternionf q = Eigen::AngleAxisf(M_PI, Eigen::Vector3f::UnitX())
+      * Eigen::AngleAxisf(floorplan_img.yaw, Eigen::Vector3f::UnitZ());
+    floorplan_msg.info.origin.orientation.x = q.x();
+    floorplan_msg.info.origin.orientation.y = q.y();
+    floorplan_msg.info.origin.orientation.z = q.z();
+    floorplan_msg.info.origin.orientation.w = q.w();
+
+    std::vector<uint8_t> u_data(img.data, img.data + img.rows*img.cols);
+    std::vector<int8_t> occupancy_data;
+    for (auto pix : u_data)
+    {
+      auto pix_val = round((int)(0xFF - pix)/255.0*100);
+      occupancy_data.push_back(pix_val);
+    }
+
+    floorplan_msg.data = occupancy_data;
+    _floorplan_pub->publish(floorplan_msg);
   }
 
   struct RvizParam
@@ -739,12 +790,13 @@ private:
   rclcpp::TimerBase::SharedPtr _timer;
   rclcpp::Publisher<MarkerArray>::SharedPtr _schedule_markers_pub;
   rclcpp::Publisher<MarkerArray>::SharedPtr _map_markers_pub;
+  rclcpp::Publisher<OccupancyGrid>::SharedPtr _floorplan_pub;
   rclcpp::Subscription<RvizParamMsg>::SharedPtr _param_sub;
   rclcpp::callback_group::CallbackGroup::SharedPtr _cb_group_param_sub;
   rclcpp::Subscription<BuildingMap>::SharedPtr _map_sub;
   rclcpp::callback_group::CallbackGroup::SharedPtr _cb_group_map_sub;
 
-  rmf_schedule_visualizer::VisualizerDataNode& _visualizer_data_node;
+  std::shared_ptr<VisualizerDataNode> _visualizer_data_node;
 
   RvizParam _rviz_param;
 };
@@ -807,7 +859,7 @@ int main(int argc, char* argv[])
 
   auto rviz_node = std::make_shared<RvizNode>(
     "rviz_node",
-    *visualizer_data_node,
+    visualizer_data_node,
     std::move(map_name),
     rate);
 

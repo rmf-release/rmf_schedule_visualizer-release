@@ -1,5 +1,7 @@
-![](https://github.com/osrf/rmf_schedule_visualizer/workflows/build/badge.svg)
-![](https://github.com/osrf/rmf_schedule_visualizer/workflows/style/badge.svg)
+|       | Ubuntu 20.04                                                                              |
+|-------|-------------------------------------------------------------------------------------------|
+| Build | ![]( https://github.com/osrf/rmf_schedule_visualizer/workflows/build_foxy/badge.svg )     |
+| Style | ![]( https://github.com/osrf/rmf_schedule_visualizer/workflows/style/badge.svg )          |
 
 # rmf_schedule_visualizer
 
@@ -9,21 +11,20 @@ A visualizer for robot trajectories in the `rmf schedule database`, live locatio
 
 ## System Requirements
 
-The visualizer is developed and tested on
-* [Ubuntu 18.04 LTS](http://releases.ubuntu.com/18.04/) 
-* [ROS2 Eloquent](https://index.ros.org/doc/ros2/Installation/#installationguide).
+The RMF schedule visualizer is supported on
+* [Ubuntu 20.04 LTS](http://releases.ubuntu.com/20.04/) 
+* [ROS2 Foxy](https://index.ros.org/doc/ros2/Installation/#installationguide).
 
 ## Installation 
 Install RMF dependencies
 ```
 sudo apt update
 sudo apt install -y wget
-echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable bionic main" > /etc/apt/sources.list.d/gazebo-stable.list
-wget https://packages.osrfoundation.org/gazebo.key -O - | apt-key add -
+sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
+wget https://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
 sudo apt update
 sudo apt install python3-shapely python3-yaml python3-requests \
-libignition-common3-dev libignition-plugin-dev libboost-system-dev libboost-date-time-dev libboost-regex-dev libboost-random-dev \
-g++-8 -y
+-y
 ```
 
 Setup and build workspace
@@ -35,9 +36,9 @@ git clone https://github.com/osrf/traffic_editor.git
 git clone https://github.com/osrf/rmf_schedule_visualizer.git
 cd ~/ws_rmf
 rosdep update
-rosdep install --from-paths src --ignore-src --rosdistro eloquent -yr
-source /opt/ros/eloquent/setup.bash
-CXX=g++-8 colcon build --cmake-args -DCMAKE_BUILD_TYPE=RELEASE
+rosdep install --from-paths src --ignore-src --rosdistro foxy -yr
+source /opt/ros/foxy/setup.bash
+colcon build --cmake-args -DCMAKE_BUILD_TYPE=RELEASE
 ```
 
 ## Run 
@@ -72,6 +73,10 @@ To start the websocket server,
 ```ros2 launch visualizer server.xml```
 
 The default port_number of the websocet server is `8006`. 
+
+To test negotiation status trajectories, we can setup negotiations to be retained. Add `-history 999` to the following line in `server.xml`:
+
+``` <node pkg="rmf_schedule_visualizer" exec="schedule_visualizer" args="-p $(var port) -history 999"> ```
 
 ### Sample Client Requests
 

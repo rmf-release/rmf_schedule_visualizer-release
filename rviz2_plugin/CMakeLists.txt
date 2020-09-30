@@ -22,6 +22,7 @@ set(CMAKE_AUTOMOC ON)
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rmf_door_msgs REQUIRED)
 find_package(rmf_lift_msgs REQUIRED)
@@ -29,6 +30,7 @@ find_package(rmf_schedule_visualizer_msgs REQUIRED)
 find_package(rviz_common REQUIRED)
 find_package(rviz_rendering REQUIRED)
 find_package(rviz_default_plugins REQUIRED)
+find_package(rmf_traffic_ros2 REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Widgets Test)
 
 add_definitions(-DQT_NO_KEYWORDS)
@@ -50,6 +52,7 @@ target_link_libraries(${PROJECT_NAME}
     ${rviz_rendering_LIBRARIES}
     ${rviz_default_plugins_LIBRARIES}
     ${Qt5Widgets_LIBRARIES}
+    rmf_traffic_ros2::rmf_traffic_ros2
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -73,7 +76,15 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE "RVIZ_DEFAULT_PLUGINS_BUILDIN
 pluginlib_export_plugin_description_file(rviz_common plugin_description.xml)
 
 ament_export_include_directories(include)
-ament_export_interfaces(${PROJECT_NAME} HAS_LIBRARY_TARGET)
+
+if($ENV{ROS_DISTRO} STREQUAL foxy)
+  ament_export_targets(${PROJECT_NAME} HAS_LIBRARY_TARGET)
+elseif($ENV{ROS_DISTRO} STREQUAL eloquent)
+  ament_export_interfaces(${PROJECT_NAME} HAS_LIBRARY_TARGET)
+else()
+  message(FATAL_ERROR "Unsupported ROS distribution")
+endif()
+
 ament_export_dependencies(
   Qt5
   rviz_common
