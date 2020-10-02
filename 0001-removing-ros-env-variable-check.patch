@@ -1,0 +1,32 @@
+From 4a7d86384101a85d437063c633e427d386c466e9 Mon Sep 17 00:00:00 2001
+From: "Marco A. Gutierrez" <marcogg@marcogg.com>
+Date: Fri, 2 Oct 2020 12:13:04 +0800
+Subject: [PATCH] removing ros env variable check
+
+---
+ CMakeLists.txt | 9 +--------
+ 1 file changed, 1 insertion(+), 8 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index af2c6b2..08e611d 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -76,14 +76,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE "RVIZ_DEFAULT_PLUGINS_BUILDIN
+ pluginlib_export_plugin_description_file(rviz_common plugin_description.xml)
+ 
+ ament_export_include_directories(include)
+-
+-if($ENV{ROS_DISTRO} STREQUAL foxy)
+-  ament_export_targets(${PROJECT_NAME} HAS_LIBRARY_TARGET)
+-elseif($ENV{ROS_DISTRO} STREQUAL eloquent)
+-  ament_export_interfaces(${PROJECT_NAME} HAS_LIBRARY_TARGET)
+-else()
+-  message(FATAL_ERROR "Unsupported ROS distribution")
+-endif()
++ament_export_targets(${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ 
+ ament_export_dependencies(
+   Qt5
+-- 
+2.25.1
+
