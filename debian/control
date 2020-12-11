@@ -1,0 +1,12 @@
+Source: ros-rolling-visualizer
+Section: misc
+Priority: optional
+Maintainer: yadu <yadunund@openrobotics.org>
+Build-Depends: debhelper (>= 9.0.0), ros-rolling-ament-cmake, ros-rolling-ros-workspace
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-rolling-visualizer
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-rolling-building-systems-visualizer, ros-rolling-fleet-state-visualizer, ros-rolling-launch-xml, ros-rolling-rmf-schedule-visualizer, ros-rolling-rviz2-plugin, ros-rolling-ros-workspace
+Description: TODO: Package description
