@@ -1,3 +1,32 @@
+## rmf_schedule_visualizer (rolling) - 1.9999.0-4
+
+The packages in the `rmf_schedule_visualizer` repository were released into the `rolling` distro by running `/usr/local/bin/bloom-release --rosdistro rolling --track rolling rmf_schedule_visualizer` on `Mon, 21 Dec 2020 10:22:25 -0000`
+
+These packages were released:
+- `building_systems_visualizer`
+- `fleet_state_visualizer`
+- `rmf_schedule_visualizer`
+- `rmf_schedule_visualizer_msgs`
+- `rviz2_plugin`
+- `visualizer`
+
+Version of package(s) in repository `rmf_schedule_visualizer`:
+
+- upstream repository: https://github.com/osrf/rmf_schedule_visualizer.git
+- release repository: https://github.com/rmf-release/rmf_schedule_visualizer-release.git
+- rosdistro version: `1.9999.0-3`
+- old version: `1.9999.0-3`
+- new version: `1.9999.0-4`
+
+Versions of tools used:
+
+- bloom version: `0.10.0`
+- catkin_pkg version: `0.4.23`
+- rosdep version: `0.19.0`
+- rosdistro version: `0.8.3`
+- vcstools version: `0.1.42`
+
+
 ## rmf_schedule_visualizer (rolling) - 1.9999.0-3
 
 The packages in the `rmf_schedule_visualizer` repository were released into the `rolling` distro by running `/usr/local/bin/bloom-release --rosdistro rolling --track rolling rmf_schedule_visualizer` on `Mon, 21 Dec 2020 09:49:10 -0000`
