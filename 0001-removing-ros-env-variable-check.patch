@@ -1,4 +1,4 @@
-From 4a7d86384101a85d437063c633e427d386c466e9 Mon Sep 17 00:00:00 2001
+From 9a91db642715e4d2a580512f7b4ebb7bde2a95d1 Mon Sep 17 00:00:00 2001
 From: "Marco A. Gutierrez" <marcogg@marcogg.com>
 Date: Fri, 2 Oct 2020 12:13:04 +0800
 Subject: [PATCH] removing ros env variable check
